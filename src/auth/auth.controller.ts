@@ -26,7 +26,6 @@ export class AuthController {
     @Body() body: LoginDto
   ) {
     const data = await this.authService.login(body)
-    console.log("desde controller: " + data)
     return new SuccessResponse("Usuario logueado con exito", data, 200)
   }
 

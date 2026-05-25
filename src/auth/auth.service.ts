@@ -66,8 +66,6 @@ export class AuthService {
             email: user.email,
         });
 
-        console.log("desde servicio: " + token)
-
         return { id: user.id, token };
     }
 }

@@ -21,4 +21,18 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(50)
+  description   String?   @db.Text
+  price         Decimal?  @db.Decimal(10,2)
+  isAvailable   Boolean   @default(true)
+  createdBy     User      @relation(fields: [createdById], references: [id])
+  createdById   String    @db.Uuid
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
 }
