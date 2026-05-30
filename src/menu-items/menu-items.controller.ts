@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post,Put, Query, UseGuards, Param, Request, ParseIntPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 import { MenuItemsService } from './menu-items.service';
 import { MenuItemReq } from './dto/request/menuItemReq.dto';
@@ -15,9 +15,10 @@ export class MenuItemsController {
     @Post('')
     @HttpCode(201)
     async createMenuItems(
-        @Body() body: MenuItemReq
+        @Body() body: MenuItemReq,
+        @Request() req: { user: { userId: string; email: string }}
     ) {
-        const data = await this.menuItemsService.createMenuItem(body);
+        const data = await this.menuItemsService.createMenuItem(body, req.user.userId);
         return new SuccessResponse('Menu item registrado con exito', data, 201)
     }
 
@@ -34,6 +35,18 @@ export class MenuItemsController {
         );
         const message:string = "Operación exitosa" 
         return new SuccessResponse(message, data, 200)
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Put(':id')
+    @HttpCode(200)
+    async updateMenuItem(
+        @Body() body: MenuItemReq,
+        @Param('id', ParseIntPipe) id: number,
+        @Request() req: { user: { userId: string; email: string } }
+    ) {
+        const data = await this.menuItemsService.updateMenuItem(body, id, req.user.userId);
+        return new SuccessResponse('Menu item actualizado con exito', data, 200)
     }
 
 

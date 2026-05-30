@@ -3,4 +3,5 @@ export class MenuItemReq{
     descripcion!: string;
     price!: number;
     createdById!: string;
+    isAvailable!: boolean
 }

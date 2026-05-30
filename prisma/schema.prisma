@@ -22,7 +22,8 @@ model User {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  menuItems MenuItem[]
+  menuItemsCreated MenuItem[] @relation("creado_por")
+  menuItemsUpdated MenuItem[] @relation("modificado_por")
 }
 
 model MenuItem {
@@ -31,8 +32,10 @@ model MenuItem {
   description   String?   @db.Text
   price         Decimal?  @db.Decimal(10,2)
   isAvailable   Boolean   @default(true)
-  createdBy     User      @relation(fields: [createdById], references: [id])
+  createdBy     User      @relation(name:"creado_por", fields: [createdById], references: [id])
   createdById   String    @db.Uuid
   createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedBy     User?      @relation(name: "modificado_por", fields: [updatedById], references: [id])
+  updatedById   String?    @db.Uuid
   updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
 }
