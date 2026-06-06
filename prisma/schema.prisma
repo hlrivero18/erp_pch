@@ -24,6 +24,12 @@ model User {
 
   menuItemsCreated MenuItem[] @relation("creado_por")
   menuItemsUpdated MenuItem[] @relation("modificado_por")
+
+  pedidoCreated Pedido[] @relation("pedido_creado_por")
+  pedidoUpdated Pedido[] @relation("pedido_modificado_por")
+
+  pedidoItemCreated PedidoItem[] @relation("item_p_creado_por")
+  pedidoItemUpdated PedidoItem[] @relation("item_p_modificado_por")
 }
 
 model MenuItem {
@@ -35,7 +41,46 @@ model MenuItem {
   createdBy     User      @relation(name:"creado_por", fields: [createdById], references: [id])
   createdById   String    @db.Uuid
   createdAt     DateTime  @default(now()) @db.Timestamptz(3)
-  updatedBy     User?      @relation(name: "modificado_por", fields: [updatedById], references: [id])
-  updatedById   String?    @db.Uuid
+  updatedBy     User?     @relation(name: "modificado_por", fields: [updatedById], references: [id])
+  updatedById   String?   @db.Uuid
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+
+  pedidoItem PedidoItem[] @relation("referencia_a")
+}
+
+model Pedido {
+  id            Int       @id @default(autoincrement())
+  descripcion   String?   @db.Text
+  total         Decimal?  @db.Decimal(10,2)
+  subTotal      Decimal?  @db.Decimal(10,2)
+  estado        String    @default("Pendiente") @db.VarChar(50)
+
+  createdBy     User      @relation(name:"pedido_creado_por", fields: [createdById], references: [id])
+  createdById   String    @db.Uuid
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedBy     User?     @relation(name: "pedido_modificado_por", fields: [updatedById], references: [id])
+  updatedById   String?   @db.Uuid
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+
+  pedidoItems PedidoItem[] @relation("pertenece_a")
+}
+
+model PedidoItem {
+  id            Int       @id @default(autoincrement())
+  fk_pedido     Pedido    @relation(name:"pertenece_a", fields:[fk_pedidoId], references:[id])
+  fk_pedidoId   Int       
+  fk_menuItem   MenuItem  @relation(name:"referencia_a", fields:[fk_menuItemId], references:[id])
+  fk_menuItemId Int       
+  name          String    @db.VarChar(50)
+  descripcion   String?   @db.Text
+
+  precio        Decimal?  @db.Decimal(10,2)
+  subPrecio     Decimal?  @db.Decimal(10,2)
+
+  createdBy     User      @relation(name:"item_p_creado_por", fields: [createdById], references: [id])
+  createdById   String    @db.Uuid
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedBy     User?     @relation(name: "item_p_modificado_por", fields: [updatedById], references: [id])
+  updatedById   String?   @db.Uuid
   updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
 }
