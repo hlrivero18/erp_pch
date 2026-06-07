@@ -20,4 +20,19 @@ export class PedidosController {
         const data = await this.pedidosService.createPedido(body, req.user.userId);
         return new SuccessResponse('Pedido registrado con exito', data, 201)
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('')
+    @HttpCode(200)
+    async getPedidos(
+        @Query('page') page = 1,
+        @Query('limit') limit = 10
+    ){
+        const data = await this.pedidosService.findAllPedidos(
+            Number(page),
+            Number(limit)
+        )
+        
+        return new SuccessResponse("Operación exitosa",data, 200)
+    }
 }

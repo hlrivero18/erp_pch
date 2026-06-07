@@ -1,7 +1,9 @@
 import { PedidoItem } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service"
 import { Decimal } from "@prisma/client/runtime/client";
+import { Injectable } from "@nestjs/common";
 
+@Injectable()
 export class PedidoUtils{
     constructor(
         private prismaService: PrismaService

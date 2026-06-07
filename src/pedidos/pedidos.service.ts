@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PedidoReq } from './dto/request/pedidoReq';
-import { Pedido, PedidoItem } from '@prisma/client';
+import { Pedido, PedidoItem, Prisma } from '@prisma/client';
 import { PedidoValidator } from './validators/validator';
 import { PedidoUtils } from './utils/utils';
 import { PedidoResDto } from './dto/response/pedidoRes.dto';
+import { ListPedidosResDto } from './dto/response/listPedidos.dto';
 
 @Injectable()
 export class PedidosService {
@@ -21,40 +22,40 @@ export class PedidosService {
         //Validamos cualquier tipo de conflicto con la lista de Ids
         const menuItemsFound = await this.validator.exisIdInMenuItem(body.menuItems);
 
-        await this.prismaService.$transaction(async (tx) => {
+        return await this.prismaService.$transaction(async (tx) => {
 
-            const newPedido: Pedido = await this.prismaService.pedido.create({
+            const newPedido: Pedido = await tx.pedido.create({
                 data: {
                     descripcion: body.descripcion,
                     createdById: userId
                 }
             });
 
-            const listNewPedidosItems: Array<PedidoItem> = await Promise.all(
-                menuItemsFound.map((menuItem) =>
-                    this.prismaService.pedidoItem.create({
-                        data: {
-                            createdById: userId,
-                            fk_menuItemId: menuItem.id,
-                            fk_pedidoId: newPedido.id,
-                            precio: menuItem.price,
-                            subPrecio: menuItem.price || 1 * 0.79,
-                            name: menuItem.name,
-                            descripcion: menuItem.description
-                        }
-                    })
-                )
-            );
+            const listNewPedidosItems: Array<PedidoItem> = [];
+            for (const menuItem of menuItemsFound) {
+                const newItem = await tx.pedidoItem.create({
+                    data: {
+                        createdById: userId,
+                        fk_menuItemId: menuItem.id,
+                        fk_pedidoId: newPedido.id,
+                        precio: menuItem.price,
+                        subPrecio: menuItem.price?.mul(0.79) ?? new Prisma.Decimal(0),
+                        name: menuItem.name,
+                        descripcion: menuItem.description
+                    }
+                });
+                listNewPedidosItems.push(newItem);
+            }
 
             const totales = this.utils.calTotal(listNewPedidosItems);
 
-            const newPedidoUpdate = await this.prismaService.pedido.update({
+            const newPedidoUpdate = await tx.pedido.update({
                 where: {
                     id: newPedido.id
                 },
                 data: {
                     total: totales.total,
-                    subTotal: totales.subTotal
+                    subTotal: totales.total.mul(0.79)
                 },
                 include: {
                     createdBy: true,
@@ -65,12 +66,42 @@ export class PedidosService {
 
             const responseDto = PedidoResDto.from(newPedidoUpdate);
 
-            return responseDto
+            return responseDto;
+        });
+
+    }
+
+    async findAllPedidos(
+        page: number,
+        limit: number
+    ){
+        const skip = (page - 1) * limit
+        const pedidos = await this.prismaService.pedido.findMany({
+            skip,
+            take: limit,
+            orderBy:{
+                createdAt: 'desc'
+            },
+            include: {
+                createdBy: true,
+                updatedBy: true,
+                pedidoItems: true
+            }
         })
 
+        const total = await this.prismaService.pedido.count()
 
+        const listDto = ListPedidosResDto.from(pedidos)
 
-
+        return {
+            data: listDto.listPedido,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total/limit)
+            }
+        }
     }
 
 }

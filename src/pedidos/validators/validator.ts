@@ -1,6 +1,8 @@
 import { MenuItem } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
+import { Injectable } from "@nestjs/common";
 
+@Injectable()
 export class PedidoValidator {
     constructor(
         private prismaService: PrismaService
