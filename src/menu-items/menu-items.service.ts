@@ -18,7 +18,7 @@ export class MenuItemsService {
         const newMenuItem = await this.prismaService.menuItem.create({
             data: {
                 name: body.name.toLocaleLowerCase(),
-                description: body.descripcion.toLocaleLowerCase(),
+                description: body.description.toLocaleLowerCase(),
                 price: body.price,
                 createdById: userId,
                 isAvailable: body.isAvailable
@@ -52,7 +52,7 @@ export class MenuItemsService {
             where: { id },
             data: {
                 name: body.name.toLocaleLowerCase(),
-                description: body.descripcion.toLocaleLowerCase(),
+                description: body.description.toLocaleLowerCase(),
                 price: body.price,
                 updatedById: userId,
                 isAvailable: body.isAvailable

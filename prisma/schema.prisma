@@ -73,6 +73,7 @@ model PedidoItem {
   fk_menuItemId Int       
   name          String    @db.VarChar(50)
   descripcion   String?   @db.Text
+  cantidad      Int       @default(1)
 
   precio        Decimal?  @db.Decimal(10,2)
   subPrecio     Decimal?  @db.Decimal(10,2)

@@ -1,4 +1,9 @@
 export class PedidoReq{
-    descripcion!: string;
-    menuItems!: Array<number>
+    description!: string;
+    menuItems!: Array<MenuItemReq>
+}
+
+class MenuItemReq{
+    id!: number;
+    quantity!: number
 }

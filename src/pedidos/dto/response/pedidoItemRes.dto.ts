@@ -7,6 +7,7 @@ export class PedidoItemResDto {
     descripcion! : string | null
     precio! : Decimal | null
     subPrecio! : Decimal | null
+    cantidad! : number
 
 
     public static from(item: PedidoItem) : PedidoItemResDto{
@@ -17,6 +18,7 @@ export class PedidoItemResDto {
         dto.descripcion = item.descripcion
         dto.precio = item.precio
         dto.subPrecio = item.subPrecio
+        dto.cantidad = item.cantidad
         
         return dto
     }

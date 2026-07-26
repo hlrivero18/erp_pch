@@ -20,28 +20,30 @@ export class PedidosService {
         userId: string
     ) {
         //Validamos cualquier tipo de conflicto con la lista de Ids
-        const menuItemsFound = await this.validator.exisIdInMenuItem(body.menuItems);
+        const menuItemsFound = await this.validator.exisIdInMenuItem(body.menuItems.map(i => i.id));
 
         return await this.prismaService.$transaction(async (tx) => {
 
             const newPedido: Pedido = await tx.pedido.create({
                 data: {
-                    descripcion: body.descripcion,
+                    descripcion: body.description,
                     createdById: userId
                 }
             });
 
             const listNewPedidosItems: Array<PedidoItem> = [];
             for (const menuItem of menuItemsFound) {
+                const findMenuItem = body.menuItems.find(x => x.id === menuItem.id);
                 const newItem = await tx.pedidoItem.create({
                     data: {
                         createdById: userId,
                         fk_menuItemId: menuItem.id,
                         fk_pedidoId: newPedido.id,
-                        precio: menuItem.price,
-                        subPrecio: menuItem.price?.mul(0.79) ?? new Prisma.Decimal(0),
+                        precio: menuItem.price?.mul(findMenuItem?.quantity ?? 1),
+                        subPrecio: menuItem.price?.mul(0.79).mul(findMenuItem?.quantity ?? 1) ?? new Prisma.Decimal(0),
                         name: menuItem.name,
-                        descripcion: menuItem.description
+                        descripcion: menuItem.description,
+                        cantidad: findMenuItem?.quantity ?? 1
                     }
                 });
                 listNewPedidosItems.push(newItem);
