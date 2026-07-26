@@ -46,6 +46,16 @@ export class PedidosService {
                         cantidad: findMenuItem?.quantity ?? 1
                     }
                 });
+
+                await this.prismaService.menuItem.update({
+                    where: {
+                        id: menuItem.id
+                    },
+                    data: {
+                        countSelect: menuItem.countSelect + 1
+                    }
+                })
+
                 listNewPedidosItems.push(newItem);
             }
 

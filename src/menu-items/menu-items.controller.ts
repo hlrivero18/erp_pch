@@ -27,11 +27,17 @@ export class MenuItemsController {
     @HttpCode(200)
     async findAllMenuItems(
         @Query('page') page = 1,
-        @Query('limit') limit = 10
+        @Query('limit') limit = 10,
+        @Query('sortBy') sortBy: string = 'countSelect',
+        @Query('sortOrder') sortOrder: string = 'desc',
+        @Query('search') search: string = ''
     ) {
         const data = await this.menuItemsService.findAllMenuItems(
             Number(page),
-            Number(limit)
+            Number(limit),
+            sortBy,
+            sortOrder,
+            search
         );
         const message:string = "Operación exitosa" 
         return new SuccessResponse(message, data, 200)

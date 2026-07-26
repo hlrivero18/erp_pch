@@ -68,14 +68,27 @@ export class MenuItemsService {
         return menuItemDto;
     }
 
-    async findAllMenuItems(page: number, limit: number) {
+    async findAllMenuItems(
+        page: number, 
+        limit: number, 
+        sortBy: string, 
+        sortOrder: string,
+        search: string
+    ) {
+        
         const skip = (page - 1) * limit;
 
         const menuItems = await this.prismaService.menuItem.findMany({
             skip,
             take: limit,
+            where: search ? {
+                name: {
+                    contains: search,
+                    mode: 'insensitive', 
+                },
+            } : undefined,
             orderBy: {
-                createdAt: 'desc'
+                [sortBy]: sortOrder
             },
             include: {
                 createdBy: true,
