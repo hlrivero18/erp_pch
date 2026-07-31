@@ -1,5 +1,7 @@
 export class PedidoReq{
     description!: string;
+    metodoPago!: string;
+    estado!: string;
     menuItems!: Array<MenuItemReq>
 }
 

@@ -18,6 +18,7 @@ export class PedidoResDto{
     subTotal!: Decimal | null;
     descripcion!: string | null;
     estado!: string
+    metodoPago!: string
     createdBy!: PedidoResUserDto;
     createdAt!: Date;
     updatedAt!: Date;
@@ -30,6 +31,7 @@ export class PedidoResDto{
         dto.id = pedido.id
         dto.descripcion = pedido.descripcion
         dto.estado = pedido.estado
+        dto.metodoPago = pedido.metodoPago
         dto.total = pedido.total
         dto.subTotal = pedido.subTotal
         dto.createdBy = PedidoResUserDto.from(pedido.createdBy)

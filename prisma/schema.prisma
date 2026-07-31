@@ -55,6 +55,7 @@ model Pedido {
   total         Decimal?  @db.Decimal(10,2)
   subTotal      Decimal?  @db.Decimal(10,2)
   estado        String    @default("Pendiente") @db.VarChar(50)
+  metodoPago String    @default("Transferencia") @db.VarChar(50)
 
   createdBy     User      @relation(name:"pedido_creado_por", fields: [createdById], references: [id])
   createdById   String    @db.Uuid

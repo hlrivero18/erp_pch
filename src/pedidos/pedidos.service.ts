@@ -27,6 +27,8 @@ export class PedidosService {
             const newPedido: Pedido = await tx.pedido.create({
                 data: {
                     descripcion: body.description,
+                    estado: body.estado ?? 'Pendiente',
+                    metodoPago: body.metodoPago,
                     createdById: userId
                 }
             });
