@@ -22,6 +22,18 @@ export class PedidosController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Put(':id')
+    @HttpCode(200)
+    async updatePedido(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: PedidoReq,
+        @Request() req: { user: { userId: string; email: string }}
+    ) {
+        const data = await this.pedidosService.updatePedido(id, body, req.user.userId);
+        return new SuccessResponse('Pedido actualizado con exito', data, 200)
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Get('')
     @HttpCode(200)
     async getPedidos(

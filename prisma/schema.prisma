@@ -86,4 +86,6 @@ model PedidoItem {
   updatedBy     User?     @relation(name: "item_p_modificado_por", fields: [updatedById], references: [id])
   updatedById   String?   @db.Uuid
   updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+  
+  @@unique([fk_pedidoId, fk_menuItemId])
 }

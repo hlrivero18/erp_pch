@@ -13,7 +13,7 @@ export class PedidoItemResDto {
     public static from(item: PedidoItem) : PedidoItemResDto{
         const dto = new PedidoItemResDto
 
-        dto.id = item.id
+        dto.id = item.fk_menuItemId
         dto.name = item.name
         dto.descripcion = item.descripcion
         dto.precio = item.precio
