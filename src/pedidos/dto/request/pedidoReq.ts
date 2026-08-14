@@ -1,8 +1,12 @@
 export class PedidoReq{
     description!: string;
+    envio!: number;
     metodoPago!: string;
     estado!: string;
-    menuItems!: Array<MenuItemReq>
+    descuento!: number;
+    menuItems!: Array<MenuItemReq>;
+    total!: number;
+    subTotal!: number;
 }
 
 class MenuItemReq{

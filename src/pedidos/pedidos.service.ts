@@ -29,7 +29,8 @@ export class PedidosService {
                     descripcion: body.description,
                     estado: body.estado,
                     metodoPago: body.metodoPago,
-                    createdById: userId
+                    createdById: userId,
+                    envio: body.envio
                 }
             });
 
@@ -51,15 +52,15 @@ export class PedidosService {
                 listNewPedidosItems.push(newItem);
             }
 
-            const totales = this.utils.calTotal(listNewPedidosItems);
+            // const totales = this.utils.calTotal(listNewPedidosItems);
 
             const newPedidoUpdate = await tx.pedido.update({
                 where: {
                     id: newPedido.id
                 },
                 data: {
-                    total: totales.total,
-                    subTotal: totales.total.mul(0.79)
+                    total: body.total,
+                    subTotal: body.subTotal
                 },
                 include: {
                     createdBy: true,
@@ -91,9 +92,16 @@ export class PedidosService {
                 },
                 data: {
                     descripcion: body.description,
+                    envio: body.envio,
+                    descuento: body.descuento,
                     estado: body.estado,
                     metodoPago: body.metodoPago,
                     updatedById: userId
+                },
+                include: {
+                    createdBy: true,
+                    updatedBy: true,
+                    pedidoItems: true
                 }
             });
 
@@ -123,16 +131,13 @@ export class PedidosService {
                 listNewPedidosItems.push(newItem);
             }
 
-            //Actualizamos los totales
-            const totales = this.utils.calTotal(listNewPedidosItems);
-
             const newPedidoUpdate = await tx.pedido.update({
                 where: {
                     id: newPedido.id
                 },
                 data: {
-                    total: totales.total,
-                    subTotal: totales.total.mul(0.79)
+                    total: body.total,
+                    subTotal: body.subTotal
                 },
                 include: {
                     createdBy: true,

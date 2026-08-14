@@ -16,6 +16,8 @@ export class PedidoResDto{
     id!: number;
     total!: Decimal | null;
     subTotal!: Decimal | null;
+    envio!: Decimal | null;
+    descuento!: number;
     descripcion!: string | null;
     estado!: string
     metodoPago!: string
@@ -34,6 +36,8 @@ export class PedidoResDto{
         dto.metodoPago = pedido.metodoPago
         dto.total = pedido.total
         dto.subTotal = pedido.subTotal
+        dto.envio = pedido.envio
+        dto.descuento = pedido.descuento
         dto.createdBy = PedidoResUserDto.from(pedido.createdBy)
         dto.createdAt = pedido.createdAt
         dto.items = pedido.pedidoItems.map(p => PedidoItemResDto.from(p))
