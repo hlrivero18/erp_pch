@@ -7,6 +7,7 @@ export class PedidoReq{
     menuItems!: Array<MenuItemReq>;
     total!: number;
     subTotal!: number;
+    recargo!: number;
 }
 
 class MenuItemReq{

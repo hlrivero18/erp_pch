@@ -14,10 +14,11 @@ export type PedidoWithRelations = Prisma.PedidoGetPayload<{
 
 export class PedidoResDto{
     id!: number;
-    total!: Decimal | null;
-    subTotal!: Decimal | null;
-    envio!: Decimal | null;
+    total!: number | null;
+    subTotal!: number | null;
+    envio!: number | null;
     descuento!: number;
+    recargo!: number;
     descripcion!: string | null;
     estado!: string
     metodoPago!: string
@@ -34,10 +35,11 @@ export class PedidoResDto{
         dto.descripcion = pedido.descripcion
         dto.estado = pedido.estado
         dto.metodoPago = pedido.metodoPago
-        dto.total = pedido.total
-        dto.subTotal = pedido.subTotal
-        dto.envio = pedido.envio
+        dto.total = Number(pedido.total)
+        dto.subTotal = Number(pedido.subTotal)
+        dto.envio = Number(pedido.envio)
         dto.descuento = pedido.descuento
+        dto.recargo = pedido.recargo
         dto.createdBy = PedidoResUserDto.from(pedido.createdBy)
         dto.createdAt = pedido.createdAt
         dto.items = pedido.pedidoItems.map(p => PedidoItemResDto.from(p))

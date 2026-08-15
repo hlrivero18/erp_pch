@@ -30,7 +30,9 @@ export class PedidosService {
                     estado: body.estado,
                     metodoPago: body.metodoPago,
                     createdById: userId,
-                    envio: body.envio
+                    envio: body.envio,
+                    descuento: body.descuento,
+                    recargo: body.recargo
                 }
             });
 
@@ -94,6 +96,7 @@ export class PedidosService {
                     descripcion: body.description,
                     envio: body.envio,
                     descuento: body.descuento,
+                    recargo: body.recargo,
                     estado: body.estado,
                     metodoPago: body.metodoPago,
                     updatedById: userId

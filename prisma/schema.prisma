@@ -56,6 +56,7 @@ model Pedido {
   subTotal      Decimal?  @db.Decimal(10,2)
   envio         Decimal?  @db.Decimal(10,2) @default(0)
   descuento     Int       @default(0)
+  recargo       Int       @default(0)
   estado        String    @default("Pendiente") @db.VarChar(50)
   metodoPago    String    @default("Transferencia") @db.VarChar(50)
 
