@@ -10,22 +10,51 @@ export class ReportesService {
 
     async getReportesGeneral(){
         const dateToday = new Date();
-        const day = dateToday.getDay();
-        const year = dateToday.getFullYear();
-        const month = dateToday.getMonth()-1;
 
-        const listPedido = await this.prismaService.pedido.findMany({
+        const listPedidoMonths = await this.prismaService.pedido.findMany({
             where: {
                 createdAt: {
-                    gte: new Date(year,month,1),
-                    lte: new Date(year, month+1, 0)
+                    gte: new Date(dateToday.getFullYear(),dateToday.getMonth()-2,1),
+                    lte: new Date(dateToday.getFullYear(), dateToday.getMonth(), 0)
                 },
                 estado: 'Cobrado'
             }
         })
 
-        
-    
+        const listPedidoCurrentMonth = listPedidoMonths.filter((pedido) => {
+            return pedido.createdAt.getMonth() === dateToday.getMonth();
+        });
+
+        const listPedidosPreviousMonth = listPedidoMonths.filter((pedido) => {
+            return pedido.createdAt.getMonth() === dateToday.getMonth()-1;
+        });
+
+        const listPedidosToday = listPedidoCurrentMonth.filter((pedido) => {
+            return pedido.createdAt.getDate() === dateToday.getDate();
+        });
+
+        const listPedidosYesterday = listPedidoCurrentMonth.filter((pedido) => {
+            return pedido.createdAt.getDate() === dateToday.getDate()-1;
+        });
+
+        const reporte = {
+            ventasMesActual: {
+                totalPedidos: listPedidoCurrentMonth.length,
+                totalVentas: listPedidoCurrentMonth.reduce((acc, pedido) => acc.plus(pedido.total!), new Decimal(0)),
+                diferenciaPorcentaje: (
+                    (listPedidoCurrentMonth.length - listPedidosPreviousMonth.length) / listPedidosPreviousMonth.length
+                ) * 100
+            },
+            ventasHoy: {
+                totalPedidos: listPedidosToday.length,
+                totalVentas: listPedidosToday.reduce((acc, pedido) => acc.plus(pedido.total!), new Decimal(0)),
+                diferenciaPorcentaje: (
+                    (listPedidosToday.length - listPedidosYesterday.length) / listPedidosYesterday.length
+                ) * 100
+            }
+        }
+
+        return reporte
     }
 
     async getReportePedidos(month: string, year: string, day?: string, metodoPago?: string) {
