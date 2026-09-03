@@ -8,6 +8,26 @@ export class ReportesService {
         private prismaService: PrismaService,
     ) { }
 
+    async getReportesGeneral(){
+        const dateToday = new Date();
+        const day = dateToday.getDay();
+        const year = dateToday.getFullYear();
+        const month = dateToday.getMonth()-1;
+
+        const listPedido = await this.prismaService.pedido.findMany({
+            where: {
+                createdAt: {
+                    gte: new Date(year,month,1),
+                    lte: new Date(year, month+1, 0)
+                },
+                estado: 'Cobrado'
+            }
+        })
+
+        
+    
+    }
+
     async getReportePedidos(month: string, year: string, day?: string, metodoPago?: string) {
         const monthN = parseInt(month)-1;
         const yearN = parseInt(year);
