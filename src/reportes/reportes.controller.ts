@@ -11,9 +11,17 @@ export class ReportesController {
     ) { }
 
     @UseGuards(JwtAuthGuard)
+    @Get('/general')
+    @HttpCode(200)
+    async getReportePedidosGeneral() {
+        const data = await this.reportesService.getReportesGeneral();
+        return new SuccessResponse("Operación exitosa", data, 200)
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Get('/')
     @HttpCode(200)
-    async getReportePedidos(
+    async getReportePedidosFilter(
         @Query('month') month: string,
         @Query('year') year: string,
         @Query('day') day?: string,

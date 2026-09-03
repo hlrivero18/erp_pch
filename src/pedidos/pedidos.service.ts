@@ -27,7 +27,12 @@ export class PedidosService {
             const newPedido: Pedido = await tx.pedido.create({
                 data: {
                     descripcion: body.description,
-                    createdById: userId
+                    estado: body.estado,
+                    metodoPago: body.metodoPago,
+                    createdById: userId,
+                    envio: body.envio,
+                    descuento: body.descuento,
+                    recargo: body.recargo
                 }
             });
 
@@ -49,15 +54,15 @@ export class PedidosService {
                 listNewPedidosItems.push(newItem);
             }
 
-            const totales = this.utils.calTotal(listNewPedidosItems);
+            // const totales = this.utils.calTotal(listNewPedidosItems);
 
             const newPedidoUpdate = await tx.pedido.update({
                 where: {
                     id: newPedido.id
                 },
                 data: {
-                    total: totales.total,
-                    subTotal: totales.total.mul(0.79)
+                    total: body.total,
+                    subTotal: body.subTotal
                 },
                 include: {
                     createdBy: true,
@@ -89,9 +94,17 @@ export class PedidosService {
                 },
                 data: {
                     descripcion: body.description,
+                    envio: body.envio,
+                    descuento: body.descuento,
+                    recargo: body.recargo,
                     estado: body.estado,
                     metodoPago: body.metodoPago,
                     updatedById: userId
+                },
+                include: {
+                    createdBy: true,
+                    updatedBy: true,
+                    pedidoItems: true
                 }
             });
 
@@ -121,16 +134,13 @@ export class PedidosService {
                 listNewPedidosItems.push(newItem);
             }
 
-            //Actualizamos los totales
-            const totales = this.utils.calTotal(listNewPedidosItems);
-
             const newPedidoUpdate = await tx.pedido.update({
                 where: {
                     id: newPedido.id
                 },
                 data: {
-                    total: totales.total,
-                    subTotal: totales.total.mul(0.79)
+                    total: body.total,
+                    subTotal: body.subTotal
                 },
                 include: {
                     createdBy: true,

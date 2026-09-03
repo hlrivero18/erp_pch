@@ -69,7 +69,6 @@ export class ReportesService {
 
         let startDate: Date;
         let endDate: Date;
-        // let metodoPagoN: string = metodoPago;
         
         if(day){
             startDate = new Date(yearN, monthN, dayN)
@@ -78,9 +77,6 @@ export class ReportesService {
             startDate = new Date(yearN, monthN, 1)
             endDate = new Date(yearN, monthN+1, 0)
         }
-
-        console.log("Fecha de Inicio: ",startDate)
-        console.log("Fecha de Fin: ",endDate)
 
         const listPedido = await this.prismaService.pedido.findMany({
             where: {
@@ -92,14 +88,11 @@ export class ReportesService {
             }
         })
 
-        console.log("listPedido: ", listPedido)
-
         const reporte = {
             ventasTotales: listPedido.length,
             totalPagado: listPedido.reduce((acc, pedido) => acc.plus(pedido.total!), new Decimal(0))
         }
 
-        console.log("reporte: ", reporte)
         return reporte
     }
 }
