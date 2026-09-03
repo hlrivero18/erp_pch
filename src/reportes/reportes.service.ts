@@ -1,6 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Decimal } from '@prisma/client/runtime/client';
+import { ReporteGeneral, ReportePedidosFiltro } from './interfaces/reportes.interface';
+import {
+    getDateRangeForMonthlyReport,
+    getYesterday,
+    filterPedidosByMonth,
+    filterPedidosByDay,
+    parseReporteDateFilter,
+} from './utils/reportes-date.util';
+import {
+    calcularTotalVentas,
+    calcularDiferenciaPorcentaje,
+    obtenerProductosMasVendido,
+} from './utils/reportes-metrics.util';
 
 @Injectable()
 export class ReportesService {
@@ -8,91 +20,90 @@ export class ReportesService {
         private prismaService: PrismaService,
     ) { }
 
-    async getReportesGeneral(){
-        const dateToday = new Date();
+    async getReportesGeneral(): Promise<ReporteGeneral> {
+        const {
+            startOfPreviousMonth,
+            endOfCurrentMonth,
+            currentYear,
+            currentMonth,
+            prevYear,
+            prevMonth,
+        } = getDateRangeForMonthlyReport();
 
         const listPedidoMonths = await this.prismaService.pedido.findMany({
             where: {
                 createdAt: {
-                    gte: new Date(dateToday.getFullYear(),dateToday.getMonth()-2,1),
-                    lte: new Date(dateToday.getFullYear(), dateToday.getMonth(), 0)
+                    gte: startOfPreviousMonth,
+                    lte: endOfCurrentMonth,
                 },
-                estado: 'Cobrado'
-            }
-        })
-
-        const listPedidoCurrentMonth = listPedidoMonths.filter((pedido) => {
-            return pedido.createdAt.getMonth() === dateToday.getMonth();
+                estado: 'Cobrado',
+            },
+            include: {
+                pedidoItems: {
+                    include: {
+                        fk_menuItem: {
+                            select: {
+                                name: true,
+                                id: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
-        const listPedidosPreviousMonth = listPedidoMonths.filter((pedido) => {
-            return pedido.createdAt.getMonth() === dateToday.getMonth()-1;
-        });
+        // Filtrado por mes
+        const listPedidoCurrentMonth = filterPedidosByMonth(listPedidoMonths, currentYear, currentMonth);
+        const listPedidosPreviousMonth = filterPedidosByMonth(listPedidoMonths, prevYear, prevMonth);
 
-        const listPedidosToday = listPedidoCurrentMonth.filter((pedido) => {
-            return pedido.createdAt.getDate() === dateToday.getDate();
-        });
+        // Filtrado por día (hoy y ayer)
+        const today = new Date();
+        const yesterday = getYesterday(today);
+        const listPedidosToday = filterPedidosByDay(listPedidoMonths, today);
+        const listPedidosYesterday = filterPedidosByDay(listPedidoMonths, yesterday);
 
-        const listPedidosYesterday = listPedidoCurrentMonth.filter((pedido) => {
-            return pedido.createdAt.getDate() === dateToday.getDate()-1;
-        });
-
-        const reporte = {
+        return {
             ventasMesActual: {
                 totalPedidos: listPedidoCurrentMonth.length,
-                totalVentas: listPedidoCurrentMonth.reduce((acc, pedido) => acc.plus(pedido.total!), new Decimal(0)),
-                diferenciaPorcentaje: (
-                    (listPedidoCurrentMonth.length - listPedidosPreviousMonth.length) / listPedidosPreviousMonth.length
-                ) * 100
+                totalVentas: calcularTotalVentas(listPedidoCurrentMonth),
+                diferenciaPorcentaje: calcularDiferenciaPorcentaje(
+                    listPedidoCurrentMonth.length,
+                    listPedidosPreviousMonth.length,
+                ),
+                productosMasVendidos: obtenerProductosMasVendido(listPedidoCurrentMonth),
             },
             ventasHoy: {
                 totalPedidos: listPedidosToday.length,
-                totalVentas: listPedidosToday.reduce((acc, pedido) => acc.plus(pedido.total!), new Decimal(0)),
-                diferenciaPorcentaje: (
-                    (listPedidosToday.length - listPedidosYesterday.length) / listPedidosYesterday.length
-                ) * 100
-            }
-        }
-
-        return reporte
+                totalVentas: calcularTotalVentas(listPedidosToday),
+                diferenciaPorcentaje: calcularDiferenciaPorcentaje(
+                    listPedidosToday.length,
+                    listPedidosYesterday.length,
+                ),
+            },
+        };
     }
 
-    async getReportePedidos(month: string, year: string, day?: string, metodoPago?: string) {
-        const monthN = parseInt(month)-1;
-        const yearN = parseInt(year);
-        const dayN = parseInt(day ?? '');
-        if (year == null && month == null) {
-            throw new BadRequestException(
-                'El mes y el año son requeridos'
-            );
-        }
-
-        let startDate: Date;
-        let endDate: Date;
-        
-        if(day){
-            startDate = new Date(yearN, monthN, dayN)
-            endDate = new Date(yearN, monthN, dayN+1)
-        }else{
-            startDate = new Date(yearN, monthN, 1)
-            endDate = new Date(yearN, monthN+1, 0)
-        }
+    async getReportePedidos(
+        month: string,
+        year: string,
+        day?: string,
+        metodoPago?: string,
+    ): Promise<ReportePedidosFiltro> {
+        const { startDate, endDate } = parseReporteDateFilter(month, year, day);
 
         const listPedido = await this.prismaService.pedido.findMany({
             where: {
                 createdAt: {
                     gte: startDate,
-                    lt: endDate
+                    lt: endDate,
                 },
-                estado: 'Cobrado'
-            }
-        })
+                estado: 'Cobrado',
+            },
+        });
 
-        const reporte = {
+        return {
             ventasTotales: listPedido.length,
-            totalPagado: listPedido.reduce((acc, pedido) => acc.plus(pedido.total!), new Decimal(0))
-        }
-
-        return reporte
+            totalPagado: calcularTotalVentas(listPedido),
+        };
     }
 }
