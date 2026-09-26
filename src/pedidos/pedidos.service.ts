@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PedidoReq } from './dto/request/pedidoReq';
+import { PedidoReq, PedidoStatusReq } from './dto/request/pedidoReq';
 import { Pedido, PedidoItem, Prisma } from '@prisma/client';
 import { PedidoValidator } from './validators/validator';
 import { PedidoUtils } from './utils/utils';
@@ -12,7 +12,7 @@ export class PedidosService {
     constructor(
         private prismaService: PrismaService,
         private validator: PedidoValidator,
-        private utils: PedidoUtils
+        private utils: PedidoUtils,
     ) { }
 
     async createPedido(
@@ -156,25 +156,69 @@ export class PedidosService {
 
     }
 
-    async findAllPedidos(
-        page: number,
-        limit: number
-    ) {
-        const skip = (page - 1) * limit
-        const pedidos = await this.prismaService.pedido.findMany({
-            skip,
-            take: limit,
-            orderBy: {
-                createdAt: 'desc'
+    async updatePedidoStatus(
+    id: number,
+    body: PedidoStatusReq,
+    userId: string
+) {
+    const dataPedido = await this.prismaService.$transaction(async (tx) => {
+
+        const newPedido = await tx.pedido.update({
+            where: {
+                id: id
+            },
+            data: {
+                estado: body.estado,
+                updatedById: userId
             },
             include: {
                 createdBy: true,
                 updatedBy: true,
                 pedidoItems: true
             }
-        })
+        });
 
-        const total = await this.prismaService.pedido.count()
+        const responseDto = PedidoResDto.from(newPedido);
+
+        return responseDto;
+    });
+
+    return dataPedido;
+}
+
+    async findAllPedidos(
+        page: number,
+        limit: number,
+        startDate?: string,
+        endDate?: string
+    ) {
+        const skip = (page - 1) * limit
+        const where: Prisma.PedidoWhereInput = {};
+
+        if (startDate || endDate) {
+            const { initialDate, finalDate } = this.utils.getInitAndFinalDate(startDate, endDate);
+            where.createdAt = {
+                gte: initialDate,
+                lte: finalDate
+            }
+        }
+
+        const [pedidos, total] = await Promise.all([
+            this.prismaService.pedido.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                include: {
+                    createdBy: true,
+                    updatedBy: true,
+                    pedidoItems: true
+                }
+            }),
+            this.prismaService.pedido.count({ where })
+        ]);
 
         const listDto = ListPedidosResDto.from(pedidos)
 

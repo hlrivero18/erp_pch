@@ -14,3 +14,7 @@ class MenuItemReq{
     id!: number;
     quantity!: number
 }
+
+export class PedidoStatusReq{
+    estado!: string;
+}

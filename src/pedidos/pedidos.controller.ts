@@ -1,7 +1,7 @@
 import { HttpCode, Body, Controller, Get, Post,Put, Query, UseGuards, Param, Request, ParseIntPipe } from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
-import { PedidoReq } from './dto/request/pedidoReq';
+import { PedidoReq, PedidoStatusReq } from './dto/request/pedidoReq';
 import { SuccessResponse } from '../common/responses/success.response';
 
 @Controller('pedidos')
@@ -34,15 +34,31 @@ export class PedidosController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Put('status/:id')
+    @HttpCode(200)
+    async updatePedidoStatus(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: PedidoStatusReq,
+        @Request() req: { user: { userId: string; email: string }}
+    ) {
+        const data = await this.pedidosService.updatePedidoStatus(id, body, req.user.userId);
+        return new SuccessResponse('Estado del pedido actualizado con exito', data, 200)
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Get('')
     @HttpCode(200)
     async getPedidos(
         @Query('page') page = 1,
-        @Query('limit') limit = 10
+        @Query('limit') limit = 10,
+        @Query('startDate') startDate: string,
+        @Query('endDate') endDate: string
     ){
         const data = await this.pedidosService.findAllPedidos(
             Number(page),
-            Number(limit)
+            Number(limit),
+            startDate,
+            endDate
         )
         
         return new SuccessResponse("Operación exitosa",data, 200)
