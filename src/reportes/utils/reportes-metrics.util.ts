@@ -61,3 +61,41 @@ export function obtenerProductosMasVendido(pedidos: PedidoWithItems[]): Producto
 
     return menuItems.sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
 }
+
+/**
+ * Calcula la diferencia porcentual soportando instancias de Decimal.
+ */
+export function calcularDiferenciaPorcentajeDecimal(actual: Decimal, anterior: Decimal): number {
+    const actualNum = actual.toNumber();
+    const anteriorNum = anterior.toNumber();
+    const divisor = anteriorNum === 0 ? 1 : anteriorNum;
+    const porcentaje = ((actualNum - anteriorNum) / divisor) * 100;
+    return Number(porcentaje.toFixed(1));
+}
+
+/**
+ * Agrupa y suma el total de ventas por método de pago.
+ */
+export function obtenerTopMetodosPago(
+    pedidos: Array<{ metodoPago: string; total?: Decimal | null }>
+) {
+    const totalGeneral = calcularTotalVentas(pedidos).toNumber();
+    if (totalGeneral === 0) return [];
+
+    const map = new Map<string, number>();
+
+    for (const pedido of pedidos) {
+        // "Transferencia" es el default en la base de datos[cite: 5]
+        const metodo = pedido.metodoPago || 'Transferencia'; 
+        const valor = pedido.total ? pedido.total.toNumber() : 0;
+        map.set(metodo, (map.get(metodo) || 0) + valor);
+    }
+
+    return Array.from(map.entries())
+        .map(([metodo, totalDinero]) => ({
+            metodo,
+            totalDinero,
+            porcentajeDelTotal: Number(((totalDinero / totalGeneral) * 100).toFixed(1)),
+        }))
+        .sort((a, b) => b.totalDinero - a.totalDinero); // Ordenar de mayor a menor
+}

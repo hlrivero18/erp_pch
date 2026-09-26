@@ -98,3 +98,36 @@ export function parseReporteDateFilter(month?: string, year?: string, day?: stri
 
     return { startDate, endDate };
 }
+
+/**
+ * Retorna el inicio de la semana actual (lunes) y el inicio/fin de la semana anterior.
+ */
+export function getWeekRanges(baseDate: Date = new Date()) {
+    const dayOfWeek = baseDate.getDay(); 
+    const distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Ajuste para que Lunes sea el primer día
+
+    const startOfCurrentWeek = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - distanceToMonday);
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+    const startOfPreviousWeek = new Date(startOfCurrentWeek);
+    startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
+
+    const endOfPreviousWeek = new Date(startOfCurrentWeek);
+    endOfPreviousWeek.setMilliseconds(-1);
+
+    return { startOfCurrentWeek, startOfPreviousWeek, endOfPreviousWeek };
+}
+
+/**
+ * Filtra una lista de pedidos basándose en un rango de fechas.
+ */
+export function filterPedidosByDateRange<T extends { createdAt: Date }>(
+    pedidos: T[],
+    startDate: Date,
+    endDate: Date = new Date()
+): T[] {
+    return pedidos.filter((pedido) => {
+        const date = new Date(pedido.createdAt);
+        return date >= startDate && date <= endDate;
+    });
+}

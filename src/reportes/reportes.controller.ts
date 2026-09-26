@@ -14,7 +14,7 @@ export class ReportesController {
     @Get('/general')
     @HttpCode(200)
     async getReportePedidosGeneral() {
-        const data = await this.reportesService.getReportesGeneral();
+        const data = await this.reportesService.getReportesDashboard();
         return new SuccessResponse("Operación exitosa", data, 200)
     }
 

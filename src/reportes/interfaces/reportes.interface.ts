@@ -28,3 +28,27 @@ export interface ReportePedidosFiltro {
     ventasTotales: number;
     totalPagado: Decimal;
 }
+
+export interface MetricaVenta {
+  total: number;
+  diferenciaPorcentaje: number;
+}
+
+export interface PeriodoVentas {
+  cantidad: MetricaVenta;
+  dinero: MetricaVenta;
+}
+
+export interface MetodoPagoStats {
+  metodo: string;
+  totalDinero: number;
+  porcentajeDelTotal: number;
+}
+
+export interface ReporteDashboard {
+  ventasDia: PeriodoVentas;
+  ventasSemana: PeriodoVentas;
+  ventasMes: PeriodoVentas;
+  topMetodosPago: MetodoPagoStats[];
+  topProductos: ProductoMasVendido[];
+}

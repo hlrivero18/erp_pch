@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ReporteGeneral, ReportePedidosFiltro } from './interfaces/reportes.interface';
+import { ReporteDashboard, ReporteGeneral, ReportePedidosFiltro } from './interfaces/reportes.interface';
 import {
     getDateRangeForMonthlyReport,
     getYesterday,
     filterPedidosByMonth,
     filterPedidosByDay,
     parseReporteDateFilter,
+    filterPedidosByDateRange,
+    getWeekRanges,
 } from './utils/reportes-date.util';
 import {
     calcularTotalVentas,
     calcularDiferenciaPorcentaje,
     obtenerProductosMasVendido,
+    calcularDiferenciaPorcentajeDecimal,
+    obtenerTopMetodosPago,
 } from './utils/reportes-metrics.util';
 
 @Injectable()
@@ -80,6 +84,95 @@ export class ReportesService {
                     listPedidosYesterday.length,
                 ),
             },
+        };
+    }
+
+    async getReportesDashboard(): Promise<ReporteDashboard> {
+        const today = new Date();
+        const yesterday = getYesterday(today);
+
+        // Rangos mensuales existentes[cite: 4]
+        const { startOfPreviousMonth, currentYear, currentMonth, prevYear, prevMonth } = getDateRangeForMonthlyReport(today);
+
+        // Nuevos rangos semanales
+        const { startOfCurrentWeek, startOfPreviousWeek, endOfPreviousWeek } = getWeekRanges(today);
+
+        // Determinar la fecha más antigua para la consulta SQL (mes anterior o semana anterior)
+        const oldestDate = startOfPreviousMonth < startOfPreviousWeek ? startOfPreviousMonth : startOfPreviousWeek;
+
+        // Obtener los pedidos base filtrando solo los cobrados[cite: 4]
+        const listPedidos = await this.prismaService.pedido.findMany({
+            where: {
+                createdAt: { gte: oldestDate },
+                estado: 'Cobrado',
+            },
+            include: {
+                pedidoItems: {
+                    include: {
+                        fk_menuItem: { select: { name: true, id: true } },
+                    },
+                },
+            },
+        });
+
+        // 1. Filtrado de Periodos
+        // Mes
+        const pedidosMesActual = filterPedidosByMonth(listPedidos, currentYear, currentMonth);
+        const pedidosMesAnterior = filterPedidosByMonth(listPedidos, prevYear, prevMonth);
+
+        // Semana
+        const pedidosSemanaActual = filterPedidosByDateRange(listPedidos, startOfCurrentWeek);
+        const pedidosSemanaAnterior = filterPedidosByDateRange(listPedidos, startOfPreviousWeek, endOfPreviousWeek);
+
+        // Día
+        const pedidosHoy = filterPedidosByDay(listPedidos, today);
+        const pedidosAyer = filterPedidosByDay(listPedidos, yesterday);
+
+        // 2. Cálculos de Totales (Dinero) usando la función que maneja Decimal[cite: 2]
+        const totalDineroMesActual = calcularTotalVentas(pedidosMesActual);
+        const totalDineroMesAnterior = calcularTotalVentas(pedidosMesAnterior);
+
+        const totalDineroSemanaActual = calcularTotalVentas(pedidosSemanaActual);
+        const totalDineroSemanaAnterior = calcularTotalVentas(pedidosSemanaAnterior);
+
+        const totalDineroHoy = calcularTotalVentas(pedidosHoy);
+        const totalDineroAyer = calcularTotalVentas(pedidosAyer);
+
+        // 3. Construcción del JSON de respuesta
+        return {
+            ventasDia: {
+                cantidad: {
+                    total: pedidosHoy.length,
+                    diferenciaPorcentaje: calcularDiferenciaPorcentaje(pedidosHoy.length, pedidosAyer.length)
+                },
+                dinero: {
+                    total: totalDineroHoy.toNumber(),
+                    diferenciaPorcentaje: calcularDiferenciaPorcentajeDecimal(totalDineroHoy, totalDineroAyer)
+                }
+            },
+            ventasSemana: {
+                cantidad: {
+                    total: pedidosSemanaActual.length,
+                    diferenciaPorcentaje: calcularDiferenciaPorcentaje(pedidosSemanaActual.length, pedidosSemanaAnterior.length)
+                },
+                dinero: {
+                    total: totalDineroSemanaActual.toNumber(),
+                    diferenciaPorcentaje: calcularDiferenciaPorcentajeDecimal(totalDineroSemanaActual, totalDineroSemanaAnterior)
+                }
+            },
+            ventasMes: {
+                cantidad: {
+                    total: pedidosMesActual.length,
+                    diferenciaPorcentaje: calcularDiferenciaPorcentaje(pedidosMesActual.length, pedidosMesAnterior.length)
+                },
+                dinero: {
+                    total: totalDineroMesActual.toNumber(),
+                    diferenciaPorcentaje: calcularDiferenciaPorcentajeDecimal(totalDineroMesActual, totalDineroMesAnterior)
+                }
+            },
+            topMetodosPago: obtenerTopMetodosPago(pedidosMesActual),
+            
+            topProductos: obtenerProductosMasVendido(pedidosMesActual) || [],
         };
     }
 
